@@ -5,6 +5,13 @@ terraform {
       version = "~> 3.0"
     }
   }
+  backend "remote" {
+    organization = "test-org"
+
+    workspaces {
+      name = "test-work"
+    }
+  }
 }
 
 provider "cloudflare" {
