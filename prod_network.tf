@@ -1,4 +1,15 @@
 # VPSからオンプレに繋ぐための(Cloudflare tunnelを経由する)TCPネットワーク
+
+resource "cloudflare_certificate_pack" "advanced_cert_for_tcp_prod_network" {
+  zone_id               = local.cloudflare_zone_id
+  type                  = "advanced"
+  hosts                 = ["*.tcp-prod-network.${local.root_domain}"]
+  validation_method     = "txt"
+  validity_days         = 365
+  certificate_authority = "digicert"
+  cloudflare_branding   = false  
+}
+
 resource "cloudflare_access_application" "prod_vps_to_op_network" {
   zone_id                   = local.cloudflare_zone_id
   name                      = "Production Network"
