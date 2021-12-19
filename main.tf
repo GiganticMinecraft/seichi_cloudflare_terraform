@@ -28,7 +28,7 @@ provider "cloudflare" {
 resource "cloudflare_access_application" "debug_vps_to_op_network" {
   zone_id                   = local.cloudflare_zone_id
   name                      = "Debug Network"
-  domain                    = concat("*.tcp-debug-network.", locals.root_domain)
+  domain                    = concat("*.tcp-debug-network.", local.root_domain)
   type                      = "self_hosted"
   # オンプレ側が1日に1回再起動するのでセッション長は高々24時間になる
   session_duration          = "30h"
@@ -49,7 +49,7 @@ resource "cloudflare_access_service_token" "debug_linode_to_onp" {
 }
 
 resource "cloudflare_access_policy" "debug_linode_to_onp" {
-  application_id = cloudflare_access_application.staging_app.id
+  application_id = cloudflare_access_application.debug_vps_to_op_network.id
   zone_id        = local.cloudflare_zone_id
   name           = "Require service token for access"
   precedence     = "1"
