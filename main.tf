@@ -15,17 +15,9 @@ terraform {
 }
 
 provider "cloudflare" {
-  email   = var.cloudflare_email # export CLOUDFLARE_API_KEY 
-  api_key = var.cloudflare_api_key # export CLOUDFLARE_API_TOKEN
+  email   = var.cloudflare_email
+  api_key = var.cloudflare_api_key
 }
-
-# resource "cloudflare_argo_tunnel" "example" {
-#   account_id = "d41d8cd98f00b204e9800998ecf8427e"
-#   name       = "my-tunnel"
-#   secret     = "dGVzdA==" # Base64 secret
-# }
-
-# terraform import cloudflare_argo_tunnel.example ACCOUNT_D/ID
 
 resource "cloudflare_access_application" "staging_app" {
   zone_id                   = "1d5fdc9e88c8a8c4518b068cd94331fe"
