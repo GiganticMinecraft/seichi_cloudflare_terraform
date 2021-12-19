@@ -14,68 +14,53 @@ terraform {
   }
 }
 
+locals {
+  cloudflare_zone_id = "77c10fdfa7c65de4d14903ed8879ebcb"
+  root_domain = "seichi.click"
+}
+
 provider "cloudflare" {
   email   = var.cloudflare_email
   api_key = var.cloudflare_api_key
 }
 
-resource "cloudflare_access_application" "staging_app" {
-  zone_id                   = "1d5fdc9e88c8a8c4518b068cd94331fe"
-  name                      = "staging application"
-  domain                    = "staging.example.com"
+# VPSからオンプレに繋ぐための(Cloudflare tunnelを経由する)TCPネットワーク
+resource "cloudflare_access_application" "debug_vps_to_op_network" {
+  zone_id                   = local.cloudflare_zone_id
+  name                      = "Debug Network"
+  domain                    = concat("*.tcp-debug-network.", locals.root_domain)
   type                      = "self_hosted"
-  session_duration          = "24h"
-  auto_redirect_to_identity = false
+  # オンプレ側が1日に1回再起動するのでセッション長は高々24時間になる
+  session_duration          = "30h"
 }
 
-# Allowing access to `test@example.com` email address only
-resource "cloudflare_access_policy" "test_policy_allow" {
-  application_id = cloudflare_access_application.id
-  zone_id        = "d41d8cd98f00b204e9800998ecf8427e" // optional
-  name           = "staging policy"
-  precedence     = "1"
-  decision       = "allow"
+resource "cloudflare_access_service_token" "debug_linode_to_onp" {
+  zone_id    = local.cloudflare_zone_id
+  name       = "Linode (for Debug Network)"
 
-  include {
-    service_token = [cloudflare_access_service_token.demo.id]
-  }
-
-  exclude {
-    email = ["test@example.com"]
-  }
-
-  require {
-    email = ["test@example.com"]
-  }
-}
-
-resource "cloudflare_access_policy" "test_policy_block" {
-  application_id = cloudflare_access_application.id
-  zone_id        = "d41d8cd98f00b204e9800998ecf8427e" // optional
-  name           = "staging policy"
-  precedence     = "2"
-  decision       = "block"
-
-  # see https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/resources/access_group#conditions for policy details
-  include {
-    everyone = true
-  }
-
-  exclude {
-    group = [cloudflare_access_group.demo.id]
-  }
-}
-
-resource "cloudflare_access_service_token" "demo" {
-  account_id = "d41d8cd98f00b204e9800998ecf8427e"
-  name       = "CI/CD app renewed"
-
+  # 30日でexpireするように設定しておく。
+  # TODO: GitHub Actions等で20日に一度 terraform apply されるようにしたい
   min_days_for_renewal = 30
 
-  # This flag is important to set if min_days_for_renewal is defined otherwise 
-  # there will be a brief period where the service relying on that token 
-  # will not have access due to the resource being deleted
   lifecycle {
+    # terafform apply 等をしたときにリソースが必ず再生成されるようにする(トークンのvalidityを伸ばすようにする)
     create_before_destroy = true
+  }
+}
+
+resource "cloudflare_access_policy" "debug_linode_to_onp" {
+  application_id = cloudflare_access_application.staging_app.id
+  zone_id        = local.cloudflare_zone_id
+  name           = "Require service token for access"
+  precedence     = "1"
+  # allow/deny での制御にすると、クライアントとなるcloudflaredが起動するときにブラウザ経由の認証を求められる。
+  # Service account token による制御ではそんなことは無いが、 decision を non_identity とする必要がある。
+  # 詳細は https://developers.cloudflare.com/cloudflare-one/policies/zero-trust#actions を参照のこと
+  decision       = "non_identity"
+
+  include {
+    service_token = [
+      cloudflare_access_service_token.debug_linode_to_onp.id
+    ]
   }
 }
