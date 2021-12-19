@@ -5,11 +5,12 @@ terraform {
       version = "~> 3.0"
     }
   }
-  backend "remote" {
-    organization = "test-org"
+
+  cloud {
+    organization = "GiganticMinecraft"
 
     workspaces {
-      name = "test-work"
+      name = "seichi_cloudflare_terraform"
     }
   }
 }
