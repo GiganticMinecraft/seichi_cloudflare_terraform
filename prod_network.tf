@@ -3,7 +3,7 @@
 resource "cloudflare_certificate_pack" "advanced_cert_for_tcp_prod_network" {
   zone_id               = local.cloudflare_zone_id
   type                  = "advanced"
-  hosts                 = [local.root_domain, "*.tcp-prod-network.${local.root_domain}"]
+  hosts                 = [local.root_domain, "tcp-prod-network.${local.root_domain}", "*.tcp-prod-network.${local.root_domain}"]
   validation_method     = "txt"
   validity_days         = 365
   certificate_authority = "digicert"
