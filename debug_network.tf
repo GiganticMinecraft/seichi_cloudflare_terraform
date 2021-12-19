@@ -12,12 +12,15 @@ resource "cloudflare_access_service_token" "debug_linode_to_onp" {
   zone_id    = local.cloudflare_zone_id
   name       = "Linode (for Debug Network)"
 
-  # 30日でexpireするように設定しておく。
-  # TODO: GitHub Actions等で20日に一度 terraform apply されるようにしたい
-  min_days_for_renewal = 30
+  # サービストークンの有効期限は、最後に生成/renewされてから365日となっている。
+  # そこで、トークンが生成されてから1日以降は terraform apply されたときにrenewするように設定しておく。
+  # TODO: GitHub Actions等により20日に一度 terraform apply されるようにしたい
+  min_days_for_renewal = 1
 
   lifecycle {
-    # terafform apply 等をしたときにリソースが必ず再生成されるようにする(トークンのvalidityを伸ばすようにする)
+    # This flag is important to set if min_days_for_renewal is defined otherwise 
+    # there will be a brief period where the service relying on that token 
+    # will not have access due to the resource being deleted
     create_before_destroy = true
   }
 }
