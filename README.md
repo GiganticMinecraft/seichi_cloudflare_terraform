@@ -1,3 +1,7 @@
+# Deprecated
+
+[https://github.com/GiganticMinecraft/seichi_infra](https://github.com/GiganticMinecraft/seichi_infra) に機能がすべて移管されました。
+
 # Seichi Cloudflare Terraform
 
 整地鯖のアクセスポリシーを Cloudflare で管理するための Terraform ファイルを管理しているリポジトリです。
